@@ -19,33 +19,24 @@ fi
 if [ ! -z "$JUPYTER_PASSWORD" ]; then
     echo "Setting up Jupyter with password authentication..."
     
-    # Debug - print Jupyter version
-    jupyter --version
-    
-    # Generate password hash and print for debugging
-    JUPYTER_PASSWORD_HASH=$(python -c "from jupyter_server.auth import passwd; print(passwd('$JUPYTER_PASSWORD'))")
-    echo "Generated password hash (debug): $JUPYTER_PASSWORD_HASH"
-    
     # Create config directory if it doesn't exist
     mkdir -p /root/.jupyter
     
-    # Generate JupyterLab config file
-    jupyter lab --generate-config -y
+    # Generate password hash
+    JUPYTER_PASSWORD_HASH=$(python -c "from jupyter_server.auth import passwd; print(passwd('$JUPYTER_PASSWORD'))")
     
-    # Configure JupyterLab with password
-    cat > /root/.jupyter/jupyter_lab_config.py << EOL
+    # Write directly to config file
+    cat > /root/.jupyter/jupyter_server_config.py << EOL
 c.ServerApp.password = '$JUPYTER_PASSWORD_HASH'
 c.ServerApp.token = ''
 c.ServerApp.ip = '0.0.0.0'
 c.ServerApp.allow_root = True
-c.ServerApp.open_browser = False
-c.ServerApp.notebook_dir = '/workspace'
+c.ServerApp.root_dir = '/workspace'
 EOL
     
     echo "Jupyter password setup complete."
 else
     echo "No Jupyter password provided. Using token authentication."
-    # Default token authentication will be used
 fi
 
 # Create workspace directory if it doesn't exist
