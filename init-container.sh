@@ -18,11 +18,32 @@ fi
 # Configure Jupyter password
 if [ ! -z "$JUPYTER_PASSWORD" ]; then
     echo "Setting up Jupyter with password authentication..."
-    # Generate password hash
-    JUPYTER_PASSWORD_HASH=$(python3 -c "from jupyter_server.auth import passwd; print(passwd('$JUPYTER_PASSWORD'))")
     
-    # Update Jupyter config
+    # Debug - print Jupyter version
+    jupyter --version
+    
+    # Generate password hash and print for debugging
+    JUPYTER_PASSWORD_HASH=$(python -c "from jupyter_server.auth import passwd; print(passwd('$JUPYTER_PASSWORD'))")
+    echo "Generated password hash (debug): $JUPYTER_PASSWORD_HASH"
+    
+    # Create config directory if it doesn't exist
     mkdir -p /root/.jupyter
+    
+    # Generate config files if they don't exist
+    jupyter lab --generate-config -y
+    jupyter notebook --generate-config -y
+    
+    # Configure JupyterLab
+    cat > /root/.jupyter/jupyter_lab_config.py << EOL
+c.ServerApp.password = '$JUPYTER_PASSWORD_HASH'
+c.ServerApp.token = ''
+c.ServerApp.ip = '0.0.0.0'
+c.ServerApp.allow_root = True
+c.ServerApp.open_browser = False
+c.ServerApp.notebook_dir = '/workspace'
+EOL
+    
+    # Configure Jupyter Notebook (for compatibility)
     cat > /root/.jupyter/jupyter_notebook_config.py << EOL
 c.NotebookApp.password = '$JUPYTER_PASSWORD_HASH'
 c.NotebookApp.token = ''
@@ -31,18 +52,15 @@ c.NotebookApp.allow_root = True
 c.NotebookApp.open_browser = False
 c.NotebookApp.notebook_dir = '/workspace'
 EOL
+    
     echo "Jupyter password setup complete."
 else
     echo "No Jupyter password provided. Using token authentication."
-    # Use default token authentication
-    mkdir -p /root/.jupyter
-    cat > /root/.jupyter/jupyter_notebook_config.py << EOL
-c.NotebookApp.ip = '0.0.0.0'
-c.NotebookApp.allow_root = True
-c.NotebookApp.open_browser = False
-c.NotebookApp.notebook_dir = '/workspace'
-EOL
+    # Default token authentication will be used
 fi
+
+# Create workspace directory if it doesn't exist
+mkdir -p /workspace
 
 # Configure web console
 echo "Setting up web console..."
@@ -56,6 +74,7 @@ echo "SSH service started."
 
 # Start Jupyter Lab
 echo "Starting Jupyter Lab..."
+cd /workspace
 jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root &
 echo "Jupyter Lab started."
 
