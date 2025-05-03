@@ -29,11 +29,10 @@ if [ ! -z "$JUPYTER_PASSWORD" ]; then
     # Create config directory if it doesn't exist
     mkdir -p /root/.jupyter
     
-    # Generate config files if they don't exist
+    # Generate JupyterLab config file
     jupyter lab --generate-config -y
-    jupyter notebook --generate-config -y
     
-    # Configure JupyterLab
+    # Configure JupyterLab with password
     cat > /root/.jupyter/jupyter_lab_config.py << EOL
 c.ServerApp.password = '$JUPYTER_PASSWORD_HASH'
 c.ServerApp.token = ''
@@ -41,16 +40,6 @@ c.ServerApp.ip = '0.0.0.0'
 c.ServerApp.allow_root = True
 c.ServerApp.open_browser = False
 c.ServerApp.notebook_dir = '/workspace'
-EOL
-    
-    # Configure Jupyter Notebook (for compatibility)
-    cat > /root/.jupyter/jupyter_notebook_config.py << EOL
-c.NotebookApp.password = '$JUPYTER_PASSWORD_HASH'
-c.NotebookApp.token = ''
-c.NotebookApp.ip = '0.0.0.0'
-c.NotebookApp.allow_root = True
-c.NotebookApp.open_browser = False
-c.NotebookApp.notebook_dir = '/workspace'
 EOL
     
     echo "Jupyter password setup complete."
